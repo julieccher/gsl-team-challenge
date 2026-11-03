@@ -1,9 +1,17 @@
 {
-  "name": "Laufchallenge GSL",
-  "short_name": "Laufchallenge",
+  "id": "/",
+  "name": "ATUSRUN – GSL Team Challenge",
+  "short_name": "ATUSRUN",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
   "background_color": "#f5f5f7",
   "theme_color": "#d7193f",
-  "description": "GSL Team Challenge"
+  "description": "ATUSRUN – GSL Team Challenge",
+  "icons": [
+    {"src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}
+  ]
 }
