@@ -1,0 +1,9 @@
+{
+  "name": "Laufchallenge GSL",
+  "short_name": "Laufchallenge",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f5f7",
+  "theme_color": "#d7193f",
+  "description": "GSL Team Challenge"
+}
