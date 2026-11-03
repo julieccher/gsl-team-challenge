@@ -38,3 +38,103 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 @media(max-width:650px){
   .topbar{gap:8px}.topbar-right{min-width:0;overflow:hidden}.topbar-right>.status-dot{display:none}.topbar-right{font-size:0}.topbar-right .role-pill{font-size:8px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.content{padding:19px 13px 28px}.page-title h1{font-size:25px}.hero{min-height:185px;padding:18px 15px}.hero-content{width:82%}.hero-total{font-size:39px;letter-spacing:-2px}.hero-art{width:60px;height:60px}.hero-ball{width:42px;height:42px}.hero-ball svg{width:24px}.stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.stat-card:last-child{grid-column:span 2}.reward-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.reward-card:last-child{grid-column:span 2}.table-card,.bars-card,.run-list,.personal-weeks{border-radius:14px}.table-row{grid-template-columns:minmax(0,1.4fr) minmax(72px,.9fr) minmax(65px,.7fr);font-size:8px}.coach-table{overflow-x:auto}.weekly-plan-card{align-items:flex-start}.review-row{align-items:stretch}.review-row .run-info{flex-basis:100%}.review-row button{flex:1}.run-item{flex-wrap:wrap}.run-item .run-info{min-width:110px}.run-status{font-size:9px!important}.mobile-nav{grid-template-columns:repeat(6,minmax(0,1fr));padding:5px 2px max(5px,env(safe-area-inset-bottom));min-height:58px}.mobile-nav button{min-width:0;padding:5px 0}.mobile-nav svg{width:16px;height:16px}.mobile-nav small{font-size:6.5px;white-space:nowrap}.main{padding-bottom:76px}.modal-backdrop{align-items:end;padding:0}.modal{width:100%;max-height:92dvh;border-radius:20px 20px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom))}.form-two{grid-template-columns:1fr}.upload-box{min-height:125px}.footer{display:none}
 }
+/* Personal weekly progress: separate pre-challenge period */
+.personal-week-pre{background:#fafafd;border-radius:9px;padding:12px 9px;margin-bottom:4px}
+.personal-week-pre>div:first-child{min-width:0}
+.personal-week-pre>div:first-child b{white-space:nowrap}
+.personal-week-pre .personal-week-bar>div{background:#9b9ba3}
+.personal-week-pre>em{white-space:nowrap}
+@media(max-width:650px){.personal-week{grid-template-columns:82px minmax(35px,1fr) 54px 48px;gap:5px}.personal-week-pre{padding-left:7px;padding-right:7px}.personal-week-pre>div:first-child b{font-size:8px}.personal-week>strong,.personal-week>em{font-size:7px}}
+
+/* ATUSRUN-Spielerprofile */
+.team-profile-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px;margin:0 0 24px}
+.team-profile-card{display:flex;align-items:center;flex-direction:column;gap:7px;padding:17px 12px;background:#fff;border:1px solid var(--line);border-radius:17px;color:var(--ink);cursor:pointer;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,.025)}
+.team-profile-card:hover{border-color:#d8a0aa;transform:translateY(-1px)}
+.team-profile-avatar,.profile-photo{width:68px;height:68px;border-radius:50%;display:grid;place-items:center;overflow:hidden;background:#f4e9ec;color:var(--red);font-weight:800;font-size:21px;position:relative}
+.team-profile-avatar img,.profile-photo img{width:100%;height:100%;object-fit:cover}
+.team-profile-card>b{font-size:13px}.team-profile-card>small{font-size:10px;color:var(--muted)}
+.team-profile-stats{font-size:10px;font-weight:700;color:#555}.team-profile-open{display:flex;align-items:center;color:var(--red);font-size:10px;font-weight:700}
+.profile-editor{background:#fff;border:1px solid var(--line);border-radius:19px;padding:20px;margin:0 0 20px;box-shadow:0 2px 12px rgba(0,0,0,.025)}
+.profile-editor-head{display:flex;align-items:center;gap:15px;margin-bottom:17px}
+.profile-photo{width:86px;height:86px;flex:0 0 86px;border:0;font:inherit;cursor:pointer}
+.profile-photo:disabled{cursor:default}
+.profile-photo>span{position:absolute;right:0;bottom:0;background:var(--red);color:#fff;border-radius:50%;width:27px;height:27px;display:grid;place-items:center;border:2px solid white}
+.profile-editor-head small{font-size:9px;color:var(--muted);font-weight:800;letter-spacing:.08em}
+.profile-editor-head h2{font-size:20px;margin:4px 0}.profile-editor-head p{font-size:12px;color:var(--muted);margin:0}
+.profile-fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.profile-fields label{display:grid;gap:7px;font-size:11px;font-weight:700;color:#555}
+.profile-fields input,.profile-fields textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px;background:#fafafa;font:inherit;font-size:12px;color:var(--ink)}
+.profile-fields textarea{resize:vertical}.profile-bio-view{font-size:12px;color:#555;white-space:pre-wrap}
+.profile-save{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px}.profile-save small{font-size:10px;color:var(--muted)}
+@media(max-width:650px){.team-profile-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.team-profile-card{padding:13px 8px}.profile-editor{padding:15px}.profile-fields{grid-template-columns:1fr}.profile-photo{width:72px;height:72px;flex-basis:72px}.profile-save{align-items:flex-start;flex-direction:column}}
+
+/* ATUSRUN 2.0 – mobile-first login and overflow protection */
+html,body,#root{width:100%;min-height:100%;margin:0}
+body{overflow-x:hidden;-webkit-text-size-adjust:100%}
+#root,.app-shell,.main,.content{min-width:0;max-width:100%}
+.login-page{min-height:100vh;min-height:100svh;width:100%;display:grid;place-items:center;padding:24px 16px calc(24px + env(safe-area-inset-bottom));background:radial-gradient(circle at 15% 5%,#fff 0,#f7f7f9 55%,#eeeef1 100%);overflow-x:hidden}
+.login-card{display:grid;gap:14px;width:min(440px,100%);min-width:0;margin:0;padding:clamp(22px,5vw,34px);background:#fff;border:1px solid #eeeef1;border-radius:24px;box-shadow:0 18px 55px rgba(20,20,30,.09)}
+.login-card .brand{padding:0 0 12px;margin:0!important;min-width:0}
+.login-card h1{font:700 clamp(30px,8vw,42px)/1.08 'Space Grotesk',sans-serif;letter-spacing:-1.5px;margin:0;overflow-wrap:anywhere}
+.login-card p{font-size:15px;line-height:1.5;margin:0 0 3px;color:#555;overflow-wrap:anywhere}
+.login-card label{display:grid;gap:7px;font-size:13px;font-weight:700;color:#777;min-width:0}
+.login-card input{width:100%;min-width:0;max-width:100%;height:52px;padding:12px 14px;border:1px solid #e4e4e9;border-radius:13px;background:#fafafd;font:400 16px 'DM Sans',sans-serif;color:#25252a;outline:none}
+.login-card input:focus{border-color:#e47a8d;box-shadow:0 0 0 3px rgba(215,25,63,.09)}
+.login-card .red-button{min-height:54px;border-radius:14px;font-size:15px;margin-top:3px}
+.login-card>small{font-size:12px;line-height:1.5}
+.run-filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr)) auto;gap:10px;align-items:end;padding:14px;margin:0 0 8px;background:#fff;border:1px solid var(--line);border-radius:14px}
+.run-filters label{display:grid;gap:6px;min-width:0;font-size:10px;font-weight:700;color:#777}
+.run-filters input,.run-filters select{width:100%;min-width:0;height:38px;padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:#fafafd;color:#333;font:12px 'DM Sans',sans-serif}
+.filter-result-count{font-size:10px;color:#999;margin:0 0 8px}
+@media(max-width:650px){.login-page{padding:16px 14px calc(16px + env(safe-area-inset-bottom))}.login-card{width:100%;padding:24px 20px;border-radius:20px;gap:13px}.login-card .brand{padding-bottom:8px}.run-filters{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;padding:12px}.run-filters .secondary-button{grid-column:1/-1;width:100%;min-height:38px}.content,.main{overflow-x:hidden}.table-card,.bars-card,.run-list{max-width:100%}.topbar-right{min-width:0;max-width:72%;overflow:hidden;white-space:nowrap}.topbar-right>.role-pill{flex-shrink:0}}
+@media(max-width:360px){.login-card{padding:20px 16px}.login-card h1{font-size:29px}.content{padding-left:12px;padding-right:12px}}
+
+/* ATUSRUN 2.0 – Mitteilungen und Audit-Protokoll */
+.announcement-list,.audit-list{display:grid;gap:12px}.announcement-card,.audit-card{background:#fff;border:1px solid var(--line);border-radius:17px;padding:18px;box-shadow:0 2px 12px rgba(0,0,0,.025);min-width:0}.announcement-meta,.audit-head{display:flex;justify-content:space-between;align-items:center;gap:12px;color:#999;font-size:9px;font-weight:700;letter-spacing:.06em}.announcement-card h3{font-size:17px;margin:10px 0 7px}.announcement-card p,.audit-card p{white-space:pre-wrap;overflow-wrap:anywhere;color:#555;font-size:12px;line-height:1.65;margin:0 0 12px}.announcement-meta span,.audit-head small{font-weight:500;letter-spacing:0;text-align:right}.audit-card>small{color:#888;font-size:10px}.audit-card details{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;font-size:11px}.audit-card summary{cursor:pointer;font-weight:700}.audit-card pre{max-width:100%;overflow:auto;background:#f7f7f9;border-radius:9px;padding:10px;font-size:10px;white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:650px){.announcement-card,.audit-card{padding:14px}.announcement-card h3{font-size:15px}.announcement-meta,.audit-head{align-items:flex-start;font-size:8px}.mobile-nav{display:flex;overflow-x:auto;justify-content:flex-start;gap:3px;padding-left:8px;padding-right:8px;scrollbar-width:none}.mobile-nav::-webkit-scrollbar{display:none}.mobile-nav button{flex:0 0 64px}.mobile-nav small{font-size:7px}}
+
+/* ATUSRUN 2.0 – responsive login, statistics and safe-area refinements */
+.login-page{min-height:100vh;min-height:100svh;width:100%;display:grid;place-items:center;padding:24px 16px calc(24px + env(safe-area-inset-bottom));background:radial-gradient(circle at 15% 5%,#fff 0,#f7f7f9 55%,#eeeef1 100%);overflow-x:hidden;box-sizing:border-box}
+.login-card{display:grid;gap:14px;width:min(440px,100%);min-width:0;margin:0;padding:clamp(22px,5vw,34px);background:#fff;border:1px solid #eeeef1;border-radius:24px;box-shadow:0 18px 55px rgba(20,20,30,.09);box-sizing:border-box}
+.login-card .brand{padding:0 0 12px;margin:0!important;min-width:0}
+.login-card h1{font:700 clamp(30px,8vw,42px)/1.08 'Space Grotesk',sans-serif;letter-spacing:-1.5px;margin:0;overflow-wrap:anywhere}
+.login-card p{font-size:15px;line-height:1.5;margin:0 0 3px;color:#555;overflow-wrap:anywhere}
+.login-card label{display:grid;gap:7px;font-size:13px;font-weight:700;color:#777;min-width:0}
+.login-card input{width:100%;min-width:0;max-width:100%;height:52px;padding:12px 14px;border:1px solid #e4e4e9;border-radius:13px;background:#fafafd;font:400 16px 'DM Sans',sans-serif;color:#25252a;outline:none;box-sizing:border-box}
+.login-card input:focus{border-color:#e47a8d;box-shadow:0 0 0 3px rgba(215,25,63,.09)}
+.login-card .red-button{width:100%;min-height:54px;border-radius:14px;font-size:15px;margin-top:3px;justify-content:center}
+.login-card>small{font-size:12px;line-height:1.5}
+.development-card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:18px 18px 12px;margin-bottom:24px;min-width:0}
+.development-bars{height:180px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:clamp(8px,3vw,22px);align-items:end}
+.development-column{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:end;gap:7px;min-width:0}
+.development-column>b{font-size:10px;color:#555;font-variant-numeric:tabular-nums}
+.development-track{height:125px;width:min(100%,34px);background:#f1f1f4;border-radius:9px;display:flex;align-items:end;overflow:hidden}
+.development-track span{display:block;width:100%;min-height:0;background:linear-gradient(180deg,#ef526d,var(--red));border-radius:8px 8px 3px 3px}
+.development-column>small{font-size:10px;color:#888;font-weight:700}
+.development-card>p{font-size:10px;line-height:1.5;color:#999;margin:13px 0 0}
+#root,.app-shell,.main,.content{min-width:0;max-width:100%;box-sizing:border-box}
+@media(max-width:650px){.login-page{padding:16px 14px calc(16px + env(safe-area-inset-bottom))}.login-card{width:100%;padding:24px 20px;border-radius:20px;gap:13px}.login-card .brand{padding-bottom:8px}.login-card h1{font-size:clamp(30px,8vw,38px)}.login-card p{font-size:14px}.content,.main{overflow-x:hidden}.table-card,.bars-card,.run-list,.personal-weeks,.development-card{max-width:100%}.development-card{padding:14px 12px 11px}.development-bars{height:155px;gap:7px}.development-track{height:105px;width:min(100%,28px)}.development-column>b{font-size:9px}}
+@media(max-width:360px){.login-card{padding:20px 16px}.login-card h1{font-size:29px}.content{padding-left:12px;padding-right:12px}}
+
+/* ATUSRUN 2.0 – responsive login, statistics and safe-area refinements */
+.login-page{min-height:100vh;min-height:100svh;width:100%;display:grid;place-items:center;padding:24px 16px calc(24px + env(safe-area-inset-bottom));background:radial-gradient(circle at 15% 5%,#fff 0,#f7f7f9 55%,#eeeef1 100%);overflow-x:hidden;box-sizing:border-box}
+.login-card{display:grid;gap:14px;width:min(440px,100%);min-width:0;margin:0;padding:clamp(22px,5vw,34px);background:#fff;border:1px solid #eeeef1;border-radius:24px;box-shadow:0 18px 55px rgba(20,20,30,.09);box-sizing:border-box}
+.login-card .brand{padding:0 0 12px;margin:0!important;min-width:0}
+.login-card h1{font:700 clamp(30px,8vw,42px)/1.08 'Space Grotesk',sans-serif;letter-spacing:-1.5px;margin:0;overflow-wrap:anywhere}
+.login-card p{font-size:15px;line-height:1.5;margin:0 0 3px;color:#555;overflow-wrap:anywhere}
+.login-card label{display:grid;gap:7px;font-size:13px;font-weight:700;color:#777;min-width:0}
+.login-card input{width:100%;min-width:0;max-width:100%;height:52px;padding:12px 14px;border:1px solid #e4e4e9;border-radius:13px;background:#fafafd;font:400 16px 'DM Sans',sans-serif;color:#25252a;outline:none;box-sizing:border-box}
+.login-card input:focus{border-color:#e47a8d;box-shadow:0 0 0 3px rgba(215,25,63,.09)}
+.login-card .red-button{width:100%;min-height:54px;border-radius:14px;font-size:15px;margin-top:3px;justify-content:center}
+.login-card>small{font-size:12px;line-height:1.5;color:#777}
+.development-card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:18px 18px 12px;margin-bottom:24px;min-width:0}
+.development-bars{height:180px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:clamp(8px,3vw,22px);align-items:end}
+.development-column{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:end;gap:7px;min-width:0}
+.development-column>b{font-size:10px;color:#555;font-variant-numeric:tabular-nums}
+.development-track{height:125px;width:min(100%,34px);background:#f1f1f4;border-radius:9px;display:flex;align-items:end;overflow:hidden}
+.development-track span{display:block;width:100%;min-height:0;background:linear-gradient(180deg,#ef526d,var(--red));border-radius:8px 8px 3px 3px}
+.development-column>small{font-size:10px;color:#888;font-weight:700}
+.development-card>p{font-size:10px;line-height:1.5;color:#999;margin:13px 0 0}
+#root,.app-shell,.main,.content{min-width:0;max-width:100%;box-sizing:border-box}
+@media(max-width:650px){.login-page{padding:16px 14px calc(16px + env(safe-area-inset-bottom))}.login-card{width:100%;padding:24px 20px;border-radius:20px;gap:13px}.login-card .brand{padding-bottom:8px}.login-card h1{font-size:clamp(30px,8vw,38px)}.login-card p{font-size:14px}.content,.main{overflow-x:hidden}.table-card,.bars-card,.run-list,.personal-weeks,.development-card{max-width:100%}.development-card{padding:14px 12px 11px}.development-bars{height:155px;gap:7px}.development-track{height:105px;width:min(100%,28px)}.development-column>b{font-size:9px}}
+@media(max-width:360px){.login-card{padding:20px 16px}.login-card h1{font-size:29px}.content{padding-left:12px;padding-right:12px}}

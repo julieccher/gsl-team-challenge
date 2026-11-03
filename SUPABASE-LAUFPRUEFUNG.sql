@@ -54,3 +54,37 @@ using (
     where p.id = auth.uid() and p.role = 'trainer'
   )
 );
+
+-- Trainer-Entschuldigungen für einzelne Spieler und Challenge-Wochen.
+-- Eine Entschuldigung hebt ausschließlich den Wochen-Minuspunkt auf.
+create table if not exists public.weekly_excuses (
+  id uuid primary key default gen_random_uuid(),
+  player_id uuid not null references public.profiles(id) on delete cascade,
+  week_number integer not null check (week_number between 1 and 6),
+  reason text,
+  created_by uuid not null references auth.users(id),
+  created_at timestamptz not null default now(),
+  unique (player_id, week_number)
+);
+alter table public.weekly_excuses enable row level security;
+drop policy if exists "Team can read weekly excuses" on public.weekly_excuses;
+create policy "Team can read weekly excuses" on public.weekly_excuses
+for select to authenticated using (true);
+drop policy if exists "Trainers manage weekly excuses" on public.weekly_excuses;
+create policy "Trainers manage weekly excuses" on public.weekly_excuses
+for all to authenticated
+using (exists (select 1 from public.profiles p where p.id=auth.uid() and p.role='trainer'))
+with check (exists (select 1 from public.profiles p where p.id=auth.uid() and p.role='trainer') and created_by=auth.uid());
+
+-- Trainer dürfen Läufe bearbeiten und löschen. Spieler dürfen dies nicht.
+drop policy if exists "Trainers can delete runs" on public.runs;
+create policy "Trainers can delete runs" on public.runs for delete to authenticated
+using (exists (select 1 from public.profiles p where p.id=auth.uid() and p.role='trainer'));
+
+drop policy if exists "Trainers delete run screenshots" on storage.objects;
+create policy "Trainers delete run screenshots" on storage.objects
+for delete to authenticated
+using (
+  bucket_id = 'run-screenshots'
+  and exists (select 1 from public.profiles p where p.id=auth.uid() and p.role='trainer')
+);
