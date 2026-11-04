@@ -392,7 +392,7 @@ function ChallengeApp({ user, profile, onSignOut }: { user: User; profile: any; 
       <footer className="footer"><span>ATUSRUN · GSL</span><span>Jeder Kilometer zählt.</span></footer>
     </main>
 
-    <div className="mobile-nav">{navItems.filter(([k])=>k!=="settings").map(([k,label,icon])=><button key={k} className={tab===k?"active":""} onClick={()=>setTab(k)}>{icon}<small>{label==="Wochenübersicht"?"Woche":label==="Wochenplan"?"Plan":label==="Läufe"?"Läufe":label==="Meine Übersicht"?"Ich":label==="Trainerübersicht"?"Team":label==="Dashboard"?"Start":label}</small></button>)}</div>
+    <div className="mobile-nav">{visibleNavItems.map(([k,label,icon])=><button key={k} className={tab===k?"active":""} onClick={()=>setTab(k)}>{icon}<small>{label==="Wochenübersicht"?"Woche":label==="Wochenplan"?"Plan":label==="Läufe"?"Läufe":label==="Meine Übersicht"?"Ich":label==="Trainerübersicht"?"Team":label==="Dashboard"?"Start":label}</small></button>)}</div>
 
     {modal&&<Modal mode={modal} run={editRun} player={editPlayer} players={players.filter(p=>p.active)} selectedId={selectedId} onClose={()=>{setModal(null);setEditRun(null);setEditPlayer(null);}} onSaveRun={saveRun} isCoach={role === "coach"} onSavePlayer={savePlayer}/>}
 
