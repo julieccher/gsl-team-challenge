@@ -6,12 +6,21 @@ import {
   LockKeyhole, LogOut, Medal, Pencil, Plus, Settings, ShieldCheck, Trash2,
   Trophy, Upload, Users, Wallet, X
 } from "lucide-react";
-import Tesseract from "tesseract.js";
+import { readRunScreenshot, type KmCheck } from "./lib/ocr";
 import { supabase } from "./lib/supabase";
 import type { Session, User } from "@supabase/supabase-js";
 
 type Player = { id: string; name: string; number: number; active: boolean; avatar_url?: string | null; avatarDisplayUrl?: string | null; position?: string | null; bio?: string | null };
-type Run = { id: string; playerId: string; km: number; date: string; minutes: number; note: string; status: "pending" | "approved" | "rejected"; screenshot_path: string | null; rejection_reason?: string | null };
+type Run = { id: string; playerId: string; km: number; kmMissing?: boolean; kmCheck?: KmCheck | null; date: string; minutes: number; note: string; status: "pending" | "approved" | "rejected"; screenshot_path: string | null; rejection_reason?: string | null };
+const RUN_COLUMNS = "id,player_id,distance_km,km_check,run_date,minutes,note,status,screenshot_path,rejection_reason";
+const mapRun = (r: any): Run => ({ id: r.id, playerId: r.player_id, km: r.distance_km == null ? 0 : Number(r.distance_km), kmMissing: r.distance_km == null, kmCheck: r.km_check ?? null, date: r.run_date, minutes: r.minutes ?? 0, note: r.note ?? "", status: r.status ?? "approved", screenshot_path: r.screenshot_path ?? null, rejection_reason: r.rejection_reason ?? null });
+// Fällt auf die alten Spalten zurück, falls SUPABASE-KM-PRUEFUNG.sql noch nicht ausgeführt wurde.
+async function fetchRuns() {
+  const res = await supabase.from("runs").select(RUN_COLUMNS);
+  if (!res.error) return res;
+  return supabase.from("runs").select(RUN_COLUMNS.replace(",km_check", ""));
+}
+const runKmText = (r: Run) => r.kmMissing ? "km fehlt" : `${kmText(r.km)} km`;
 type Role = "player" | "coach";
 const isTrainerRole = (value: unknown) => ["trainer", "coach"].includes(String(value ?? "").trim().toLowerCase());
 type Tab = "dashboard" | "week" | "plan" | "private" | "team" | "runs" | "messages" | "audit" | "settings";
@@ -148,7 +157,7 @@ function ChallengeApp({ user, profile, onSignOut }: { user: User; profile: any; 
     async function loadCloudData() {
       const [{ data: profiles, error: profileError }, { data: cloudRuns, error: runsError }, { data: excuses, error: excusesError }, { data: posts, error: postsError }] = await Promise.all([
         supabase.from("profiles").select("id,name,number,active,role,avatar_url,position,bio").order("name"),
-        supabase.from("runs").select("id,player_id,distance_km,run_date,minutes,note,status,screenshot_path,rejection_reason"),
+        fetchRuns(),
         supabase.from("weekly_excuses").select("id,player_id,week_number,reason"),
         supabase.from("team_announcements").select("id,title,message,created_at,author_id").order("created_at",{ascending:false}).limit(50)
       ]);
@@ -174,7 +183,7 @@ function ChallengeApp({ user, profile, onSignOut }: { user: User; profile: any; 
       if (!live) return;
 
       setPlayers(mappedProfiles);
-      setRuns((cloudRuns ?? []).map((r:any) => ({ id:r.id, playerId:r.player_id, km:Number(r.distance_km), date:r.run_date, minutes:r.minutes ?? 0, note:r.note ?? "", status:r.status ?? "approved", screenshot_path:r.screenshot_path ?? null, rejection_reason:r.rejection_reason ?? null })));
+      setRuns((cloudRuns ?? []).map(mapRun));
       setWeeklyExcuses(excusesError ? [] : (excuses ?? []));
       setAnnouncements(postsError ? [] : (posts ?? []));
       if (isTrainerRole(profile.role)) {
@@ -261,19 +270,31 @@ function ChallengeApp({ user, profile, onSignOut }: { user: User; profile: any; 
       if(uploadError){flash("Screenshot-Upload fehlgeschlagen: "+uploadError.message);return;}
     }
     const existing = runs.find(r=>r.id===run.id);
-    const payload={player_id:role==="coach"?run.playerId:user.id,distance_km:run.km,run_date:run.date,minutes:run.minutes||null,note:run.note||null,...(existing?{}:{status:role==="coach"?"approved":"pending"}),...(screenshotPath?{screenshot_path:screenshotPath}:{})};
-    const result = existing ? await supabase.from("runs").update(payload).eq("id",run.id) : await supabase.from("runs").insert({...payload,screenshot_path:screenshotPath});
+    const kmCheck:KmCheck|null=role==="coach"?(existing&&!existing.kmMissing&&existing.km===run.km?existing.kmCheck??null:"manual"):(run.kmCheck??(run.kmMissing?"missing":"unsure"));
+    const payload={player_id:role==="coach"?run.playerId:user.id,distance_km:run.kmMissing?null:run.km,km_check:kmCheck,run_date:run.date,minutes:run.minutes||null,note:run.note||null,...(existing?{}:{status:role==="coach"?"approved":"pending"}),...(screenshotPath?{screenshot_path:screenshotPath}:{})};
+    const write=(body:Record<string,unknown>)=>existing ? supabase.from("runs").update(body).eq("id",run.id) : supabase.from("runs").insert({...body,screenshot_path:screenshotPath});
+    let result = await write(payload);
+    if(result.error&&/km_check/.test(result.error.message)){const {km_check:_,...legacy}=payload;result=await write(legacy);}
     if(result.error){flash((existing?"Bearbeiten":"Einreichen")+" fehlgeschlagen: "+result.error.message);return;}
-    const {data,error:loadError}=await supabase.from("runs").select("id,player_id,distance_km,run_date,minutes,note,status,screenshot_path,rejection_reason");
+    const {data,error:loadError}=await fetchRuns();
     if(loadError){flash(loadError.message);return;}
-    setRuns((data??[]).map((r:any)=>({id:r.id,playerId:r.player_id,km:Number(r.distance_km),date:r.run_date,minutes:r.minutes??0,note:r.note??"",status:r.status??"approved",screenshot_path:r.screenshot_path??null,rejection_reason:r.rejection_reason??null})));
+    setRuns((data??[]).map(mapRun));
     setModal(null);setEditRun(null);flash(existing?"Lauf erfolgreich aktualisiert":role==="coach"?"Lauf als Trainer eingetragen":"Screenshot eingereicht – wartet auf Trainerfreigabe");
   }
-    async function reviewRun(id:string,status:"approved"|"rejected"){
+  async function reviewRun(id:string,status:"approved"|"rejected",km?:number){
     if(role!=="coach")return;
-    const {error}=await supabase.from("runs").update({status}).eq("id",id);
+    const target=runs.find(r=>r.id===id);
+    const update:Record<string,unknown>={status};
+    if(status==="approved"){
+      const value=km??(target?.kmMissing?NaN:target?.km);
+      if(!value||!Number.isFinite(value)||value<=0||value>200){flash("Bitte vor der Freigabe gültige Kilometer eintragen.");return;}
+      update.distance_km=value;
+      if(target&&(target.kmMissing||Math.abs(target.km-value)>0.001))update.km_check="manual";
+    }
+    let {error}=await supabase.from("runs").update(update).eq("id",id);
+    if(error&&/km_check/.test(error.message)){delete update.km_check;({error}=await supabase.from("runs").update(update).eq("id",id));}
     if(error){flash("Prüfung fehlgeschlagen: "+error.message);return;}
-    setRuns(prev=>prev.map(r=>r.id===id?{...r,status}:r));flash(status==="approved"?"Lauf freigegeben":"Lauf abgelehnt");
+    setRuns(prev=>prev.map(r=>r.id===id?{...r,status,...(status==="approved"?{km:update.distance_km as number,kmMissing:false,kmCheck:(update.km_check as KmCheck|undefined)??r.kmCheck}:{})}:r));flash(status==="approved"?"Lauf freigegeben":"Lauf abgelehnt");
   }
 
   async function openScreenshot(path:string){
@@ -485,7 +506,7 @@ function TeamView({stats,totalPoints,finalBonuses,goal,allKm,reward,onEditPlayer
   </>;
 }
 
-function AllRuns({runs,players,role,selectedId,onAdd,onEdit,onDelete,onReview,onScreenshot}:{runs:Run[];players:Player[];role:Role;selectedId:string;onAdd:()=>void;onEdit:(r:Run)=>void;onDelete:(id:string)=>void;onReview:(id:string,s:"approved"|"rejected")=>void;onScreenshot:(p:string)=>void}) {
+function AllRuns({runs,players,role,selectedId,onAdd,onEdit,onDelete,onReview,onScreenshot}:{runs:Run[];players:Player[];role:Role;selectedId:string;onAdd:()=>void;onEdit:(r:Run)=>void;onDelete:(id:string)=>void;onReview:(id:string,s:"approved"|"rejected",km?:number)=>void;onScreenshot:(p:string)=>void}) {
   const [filterPlayer,setFilterPlayer]=useState("all");
   const [filterStatus,setFilterStatus]=useState("all");
   const [filterFrom,setFilterFrom]=useState("");
@@ -502,12 +523,7 @@ function AllRuns({runs,players,role,selectedId,onAdd,onEdit,onDelete,onReview,on
           {pending.length === 0 ? <div className="empty-card">Aktuell keine Läufe zur Prüfung.</div> : (
             <div className="run-list">
               {pending.map(r => (
-                <div className="review-row" key={r.id}>
-                  <div className="run-info"><b>{players.find(p => p.id === r.playerId)?.name ?? "Spieler"} · {kmText(r.km)} km</b><small>{fmtDate(r.date)} · Eingereicht, wartet auf Prüfung</small></div>
-                  {r.screenshot_path && <button className="secondary-button" onClick={() => onScreenshot(r.screenshot_path!)}>Screenshot ansehen</button>}
-                  <button className="red-button" onClick={() => onReview(r.id,"approved")}>Freigeben</button>
-                  <button className="secondary-button" onClick={() => onReview(r.id,"rejected")}>Ablehnen</button>
-                </div>
+                <ReviewRow key={r.id} run={r} playerName={players.find(p => p.id === r.playerId)?.name ?? "Spieler"} onReview={onReview} onScreenshot={onScreenshot}/>
               ))}
             </div>
           )}
@@ -526,7 +542,7 @@ function AllRuns({runs,players,role,selectedId,onAdd,onEdit,onDelete,onReview,on
         {sorted.length===0 ? <div className="empty-card">Keine Läufe für diese Filter gefunden.</div> : sorted.map(r => (
           <div className="run-item" key={r.id}>
             <div className="run-icon"><Footprints size={18}/></div>
-            <div className="run-info"><b>{players.find(p => p.id === r.playerId)?.name ?? "Lauf"} · {kmText(r.km)} km</b><small>{fmtDate(r.date)} · {r.minutes ? `${r.minutes} min` : "Zeit nicht angegeben"}</small></div>
+            <div className="run-info"><b>{players.find(p => p.id === r.playerId)?.name ?? "Lauf"} · {runKmText(r)}</b><small>{fmtDate(r.date)} · {r.minutes ? `${r.minutes} min` : "Zeit nicht angegeben"}</small></div>
             <strong className={`run-status ${r.status}`}>{r.status === "approved" ? "Freigegeben" : r.status === "rejected" ? "Abgelehnt" : "Wird geprüft"}</strong>
             {role === "coach" && r.screenshot_path && <button className="icon-button" onClick={() => onScreenshot(r.screenshot_path!)} title="Screenshot ansehen"><Camera size={15}/></button>}{role === "coach" && <><button className="icon-button" onClick={()=>onEdit(r)} title="Lauf bearbeiten"><Pencil size={15}/></button><button className="icon-button delete" onClick={()=>onDelete(r.id)} title="Lauf löschen"><Trash2 size={15}/></button></>}
           </div>
@@ -536,9 +552,25 @@ function AllRuns({runs,players,role,selectedId,onAdd,onEdit,onDelete,onReview,on
   );
 }
 
+const KM_CHECK_LABEL:Record<KmCheck,string>={verified:"✓ Automatisch erkannt & gegengeprüft",unsure:"⚠ Automatisch erkannt, nicht gegengeprüft – bitte mit Screenshot vergleichen",missing:"✗ Keine Distanz erkannt – bitte Kilometer eintragen",manual:"Vom Trainer eingetragen"};
+
+function ReviewRow({run,playerName,onReview,onScreenshot}:{run:Run;playerName:string;onReview:(id:string,s:"approved"|"rejected",km?:number)=>void;onScreenshot:(p:string)=>void}){
+  const [km,setKm]=useState(run.kmMissing?"":String(run.km));
+  const check:KmCheck=run.kmCheck??(run.kmMissing?"missing":"unsure");
+  const value=Number(km.replace(",","."));
+  const valid=Number.isFinite(value)&&value>0&&value<=200;
+  return <div className="review-row">
+    <div className="run-info"><b>{playerName} · {fmtDate(run.date)}</b><small className={`km-check ${check}`}>{KM_CHECK_LABEL[check]}</small></div>
+    <label className="review-km"><span>km</span><input inputMode="decimal" value={km} onChange={e=>setKm(e.target.value)} placeholder="z. B. 7,46" aria-label="Kilometer"/></label>
+    {run.screenshot_path && <button className="secondary-button" onClick={() => onScreenshot(run.screenshot_path!)}>Screenshot ansehen</button>}
+    <button className="red-button" disabled={!valid} title={valid?"":"Bitte zuerst Kilometer eintragen"} onClick={() => onReview(run.id,"approved",value)}>Freigeben</button>
+    <button className="secondary-button" onClick={() => onReview(run.id,"rejected")}>Ablehnen</button>
+  </div>;
+}
+
 function RunList({runs,players,onEdit,onDelete,showActions=true}:{runs:Run[];players?:Player[];onEdit:(r:Run)=>void;onDelete:(id:string)=>void;showActions?:boolean}){
   if(!runs.length)return <div className="empty-card">Noch keine Läufe gespeichert. Reiche deinen ersten Screenshot ein.</div>;
-  return <div className="run-list">{runs.map(r=><div className="run-item" key={r.id}><div className="run-icon"><Footprints size={18}/></div><div className="run-info"><b>{players?.find(p=>p.id===r.playerId)?.name??(r.note||"Laufeinheit")}</b><small>{fmtDate(r.date)} · {r.minutes?`${r.minutes} min`:"Zeit nicht angegeben"} {inChallenge(r.date)?"· Challenge":"· Vor Challenge"}</small></div><strong>{kmText(r.km)} km</strong><strong className={`run-status ${r.status}`}>{r.status==="approved"?"Freigegeben":r.status==="rejected"?"Abgelehnt":"Wird geprüft"}</strong>{showActions&&r.status==="approved"&&<><button className="icon-button" onClick={()=>onEdit(r)}><Pencil size={15}/></button><button className="icon-button delete" onClick={()=>onDelete(r.id)}><Trash2 size={15}/></button></>}</div>)}</div>;
+  return <div className="run-list">{runs.map(r=><div className="run-item" key={r.id}><div className="run-icon"><Footprints size={18}/></div><div className="run-info"><b>{players?.find(p=>p.id===r.playerId)?.name??(r.note||"Laufeinheit")}</b><small>{fmtDate(r.date)} · {r.minutes?`${r.minutes} min`:"Zeit nicht angegeben"} {inChallenge(r.date)?"· Challenge":"· Vor Challenge"}</small></div><strong>{runKmText(r)}</strong><strong className={`run-status ${r.status}`}>{r.status==="approved"?"Freigegeben":r.status==="rejected"?"Abgelehnt":"Wird geprüft"}</strong>{showActions&&r.status==="approved"&&<><button className="icon-button" onClick={()=>onEdit(r)}><Pencil size={15}/></button><button className="icon-button delete" onClick={()=>onDelete(r.id)}><Trash2 size={15}/></button></>}</div>)}</div>;
 }
 
 function SettingsView({players,setPlayers,goal,setGoal,runs,setRuns,onExport,onImport}:{players:Player[];setPlayers:(p:Player[])=>void;goal:number;setGoal:(n:number)=>void;runs:Run[];setRuns:(r:Run[])=>void;onExport:()=>void;onImport:(d:any)=>void}){
@@ -549,7 +581,9 @@ function SettingsView({players,setPlayers,goal,setGoal,runs,setRuns,onExport,onI
 function Modal({mode,run,player,players,selectedId,onClose,onSaveRun,onSavePlayer,isCoach}:{mode:"run"|"player"|"editRun";run:Run|null;player:Player|null;players:Player[];selectedId:string;onClose:()=>void;onSaveRun:(r:Run,f:File|null)=>void;onSavePlayer:(p:Player)=>void;isCoach:boolean}){
   const isPlayer=mode==="player";
   const [playerId,setPlayerId]=useState(run?.playerId??selectedId??players[0]?.id??"");
-  const [km,setKm]=useState(run?String(run.km):"");
+  const [km,setKm]=useState(run&&!run.kmMissing?String(run.km):"");
+  const [kmCheck,setKmCheck]=useState<KmCheck|null>(run?.kmCheck??null);
+  const [dateFromOcr,setDateFromOcr]=useState(false);
   const [date,setDate]=useState(run?.date??dateKey(new Date()));
   const [minutes,setMinutes]=useState(run?String(run.minutes):"");
   const [note,setNote]=useState(run?.note??"");
@@ -564,15 +598,13 @@ function Modal({mode,run,player,players,selectedId,onClose,onSaveRun,onSavePlaye
   async function readImage(file:File){
     setScreenshot(file);setBusy(true);setErr("");setOcr("Screenshot wird per Texterkennung analysiert …");
     try{
-      const result=await Tesseract.recognize(file,"eng",{logger:m=>{if(m.status==="recognizing text")setOcr(`Texterkennung: ${Math.round((m.progress??0)*100)}%`);}});
-      const text=result.data.text;
-      const matches=[...text.matchAll(/(\d{1,3}[.,]\d{1,2})\s*(?:km|kms|kilometer)\b/gi)].map(m=>Number(m[1].replace(",","."))).filter(n=>n>0&&n<200);
-      const dateMatch=text.match(/(\d{1,2})[.\/-](\d{1,2})[.\/-](20\d{2})/);
-      if(matches.length){setKm(String(Math.max(...matches)));}
-      if(dateMatch){const [,d,m,y]=dateMatch;setDate(`${y}-${m.padStart(2,"0")}-${d.padStart(2,"0")}`);}
-      setOcr(matches.length?"Distanz erkannt. Datum bitte auf Plausibilität prüfen; Trainer kontrolliert den Screenshot.":"Keine eindeutige Distanz erkannt. Bitte einen besser lesbaren Screenshot hochladen.");
+      const result=await readRunScreenshot(file,setOcr);
+      setKm(result.km==null?"":String(result.km));setKmCheck(result.kmCheck);
+      if(result.date){setDate(result.date);setDateFromOcr(true);}else{setDateFromOcr(false);}
+      setOcr(result.info+(result.date?"":" Datum nicht erkannt – bitte Laufdatum auswählen."));
     }catch{
-      setErr("Screenshot konnte nicht automatisch gelesen werden. Bitte anderen Screenshot versuchen.");
+      setKm("");setKmCheck("missing");setDateFromOcr(false);
+      setOcr("Screenshot konnte nicht automatisch gelesen werden. Du kannst trotzdem einreichen – der Trainer trägt die Kilometer bei der Freigabe ein. Bitte Laufdatum auswählen.");
     }finally{setBusy(false);}
   }
 
@@ -583,18 +615,19 @@ function Modal({mode,run,player,players,selectedId,onClose,onSaveRun,onSavePlaye
       onSavePlayer({id:player?.id??makeId(),name:name.trim(),number:Number(number),active:player?.active??true});
       return;
     }
-    const dist=Number(km.replace(",","."));
-    if(!playerId||!Number.isFinite(dist)||dist<=0||dist>200){setErr("Bitte Spieler und gültige Kilometer angeben.");return;}
+    const kmMissing=!isCoach&&km.trim()==="";
+    const dist=kmMissing?0:Number(km.replace(",","."));
+    if(!playerId||(!kmMissing&&(!Number.isFinite(dist)||dist<=0||dist>200))){setErr("Bitte Spieler und gültige Kilometer angeben.");return;}
     if(date>dateKey(new Date())){setErr("Das Laufdatum darf nicht in der Zukunft liegen.");return;}
     if(!isCoach&&!screenshot){setErr("Bitte zuerst den Original-Screenshot hochladen.");return;}
-    await onSaveRun({id:run?.id??makeId(),playerId,km:dist,date,minutes:Number(minutes)||0,note:note.trim(),status:isCoach?"approved":"pending",screenshot_path:null},screenshot);
+    await onSaveRun({id:run?.id??makeId(),playerId,km:dist,kmMissing,kmCheck:isCoach?"manual":kmCheck,date,minutes:Number(minutes)||0,note:note.trim(),status:isCoach?"approved":"pending",screenshot_path:null},screenshot);
   }
 
   return <div className="modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)onClose();}}><div className="modal"><div className="modal-header"><div><small>{isPlayer?"MANNSCHAFT":run?"LAUF BEARBEITEN":"LAUF EINREICHEN"}</small><h2>{isPlayer?(player?"Spieler bearbeiten":"Spieler hinzufügen"):(run?"Lauf bearbeiten":"Neuen Lauf erfassen")}</h2></div><button className="icon-button" onClick={onClose}><X/></button></div><form onSubmit={submit}>
   {isPlayer?<><label>Spielername<input value={name} onChange={e=>setName(e.target.value)} placeholder="Vor- und Nachname" required/></label><label>Rückennummer<input type="number" min="0" max="99" value={number} onChange={e=>setNumber(e.target.value)} required/></label></>:<>
   {isCoach&&<label>Spieler<select value={playerId} onChange={e=>setPlayerId(e.target.value)}>{players.map(p=><option key={p.id} value={p.id}>{p.name} · #{p.number}</option>)}</select></label>}
-  {mode!=="editRun"&&<div className="upload-box" onClick={()=>fileRef.current?.click()}><input ref={fileRef} hidden type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f)void readImage(f);}}/><Camera size={23}/><b>Screenshot auswählen</b><span>Garmin, Strava, Apple Fitness und andere Lauf-Apps</span><span className="upload-action"><Upload size={14}/> Bild hochladen</span></div>}{ocr&&<div className="ocr-message">{ocr}</div>}
-  <div className="form-two"><label>Kilometer<input inputMode="decimal" value={km} onChange={e=>setKm(e.target.value)} placeholder="Wird aus Screenshot gelesen" required readOnly={!isCoach}/></label><label>Datum<input type="date" value={date} onChange={e=>setDate(e.target.value)} required readOnly={!isCoach}/></label></div>{isCoach&&<div className="form-two"><label>Laufzeit (Minuten)<input type="number" min="0" value={minutes} onChange={e=>setMinutes(e.target.value)} placeholder="z. B. 42"/></label><label>Notiz<input value={note} onChange={e=>setNote(e.target.value)} placeholder="Optional"/></label></div>}{!isCoach&&<div className="ocr-message">Deine Werte sind nach dem Einreichen nicht mehr bearbeitbar. Sie zählen erst nach Trainerfreigabe.</div>}</>}
+  {mode!=="editRun"&&<div className="upload-box" onClick={()=>fileRef.current?.click()}><input ref={fileRef} hidden type="file" accept="image/*" onChange={e=>{const f=e.target.files?.[0];if(f)void readImage(f);}}/><Camera size={23}/><b>Screenshot auswählen</b><span>Garmin, Strava, Apple Fitness und andere Lauf-Apps</span><span className="upload-action"><Upload size={14}/> Bild hochladen</span></div>}{ocr&&<div className={`ocr-message ${busy?"":kmCheck??""}`}>{ocr}</div>}
+  <div className="form-two"><label>Kilometer<input inputMode="decimal" value={km} onChange={e=>setKm(e.target.value)} placeholder={isCoach?"z. B. 7,46":kmCheck==="missing"?"Trägt der Trainer ein":"Wird aus Screenshot gelesen"} required={isCoach} readOnly={!isCoach}/></label><label>Datum<input type="date" value={date} max={dateKey(new Date())} onChange={e=>setDate(e.target.value)} required readOnly={!isCoach&&dateFromOcr}/></label></div>{isCoach&&<div className="form-two"><label>Laufzeit (Minuten)<input type="number" min="0" value={minutes} onChange={e=>setMinutes(e.target.value)} placeholder="z. B. 42"/></label><label>Notiz<input value={note} onChange={e=>setNote(e.target.value)} placeholder="Optional"/></label></div>}{!isCoach&&<div className="ocr-message">Deine Werte sind nach dem Einreichen nicht mehr bearbeitbar. Sie zählen erst nach Trainerfreigabe; der Trainer prüft den Screenshot und korrigiert die Kilometer bei Bedarf.</div>}</>}
   {err&&<div className="form-error">{err}</div>}<div className="modal-actions"><button type="button" className="secondary-button" onClick={onClose}>Abbrechen</button><button className="red-button" type="submit" disabled={busy}><Check size={16}/> {isCoach?"Speichern":"Zur Prüfung einreichen"}</button></div>
   </form></div></div>;
 }
