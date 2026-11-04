@@ -140,3 +140,9 @@ body{overflow-x:hidden;-webkit-text-size-adjust:100%}
 @media(max-width:360px){.login-card{padding:20px 16px}.login-card h1{font-size:29px}.content{padding-left:12px;padding-right:12px}}
 /* Teamrangliste: 11-Spalten-Raster gegen die allgemeine mobile .table-row-Regel absichern (horizontal scrollbar statt umbrechend) */
 .table-row.coach-head,.table-row.coach-row{min-width:990px;grid-template-columns:1.7fr 1fr repeat(6,.65fr) .8fr .8fr 65px}
+/* Laufprüfung: km-Eingabe und Herkunft der Kilometer */
+.review-km{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:700;color:#777}.review-km input{width:86px;border:1px solid var(--line);border-radius:8px;background:#fafafd;padding:8px 9px;font-size:16px;color:#333}
+.km-check{font-size:9px!important;line-height:1.4}.km-check.verified{color:#207443!important}.km-check.unsure{color:#9a6700!important}.km-check.missing{color:#b42335!important}
+.review-row .red-button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+@media(max-width:650px){.review-row .run-info{flex-basis:100%}.review-km{flex:1 1 100%}.review-km input{flex:1;width:auto}}
+.ocr-message.verified{background:#eaf7ee;color:#207443}.ocr-message.unsure{background:#fff5df;color:#9a6700}
