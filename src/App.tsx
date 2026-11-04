@@ -373,7 +373,7 @@ function ChallengeApp({ user, profile, onSignOut }: { user: User; profile: any; 
     </aside>
 
     <main className="main">
-      <header className="topbar"><div className="mobile-brand"><Footprints size={20}/> ATUSRUN</div><div className="topbar-right"><span className="status-dot"/> Challenge: 30.11.2026 – 10.01.2027 <span className="role-pill">{profile.name} · {role==="coach"?"Trainer":"Spieler"}</span><button className="role-pill logout-button" onClick={onSignOut} aria-label="Abmelden" title="Abmelden"><LogOut size={18}/></button></div></header>
+      <header className="topbar"><div className="mobile-brand"><Footprints size={20}/> ATUSRUN</div><div className="topbar-right"><span className="status-dot"/> Challenge: 30.11.2026 – 10.01.2027 <span className="role-pill name-pill">{profile.name}<span className="role-suffix"> · {role==="coach"?"Trainer":"Spieler"}</span></span><button className="role-pill logout-button" onClick={onSignOut} aria-label="Abmelden" title="Abmelden"><LogOut size={18}/></button></div></header>
       <div className="content">
         {tab==="dashboard"&&<Dashboard allKm={allKm} rewardKm={rewardKm} allTimeKm={allTimeKm} preKm={preKm} reward={teamReward} rewardProgress={rewardProgress} goal={goal} setGoal={setGoal} players={activePlayers.length} challengeRuns={challengeRuns.length} stats={sortedStats} totalPoints={totalPoints} onRuns={()=>setTab("runs")} onTeam={()=>{setRole("coach");setTab("team");}}/>}
 

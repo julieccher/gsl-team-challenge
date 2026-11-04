@@ -172,3 +172,20 @@ body{overflow-x:hidden;-webkit-text-size-adjust:100%}
 .brand{gap:13px}.brand-logo{width:52px;height:52px;border-radius:16px}.brand-logo svg{width:28px;height:28px}.brand b{font-size:21px}.brand small{font-size:10.5px}
 @media(max-width:650px){.mobile-brand{gap:9px;font-size:20px;letter-spacing:-.3px}.mobile-brand svg{width:26px;height:26px}}
 .brand-logo{flex-shrink:0}
+/* Handy-Feinschliff nach iPhone-Screenshots */
+@media(max-width:650px){
+.hero-art{margin-bottom:34px}
+.hero-art>span{top:calc(100% + 7px);bottom:auto;left:50%;right:auto;transform:translateX(-50%);white-space:nowrap;font-size:10px;letter-spacing:1.5px;line-height:1.35;text-align:center}
+
+.run-filters{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+.run-filters label{font-size:13px}
+.run-filters label:has(select){grid-column:1/-1}
+.run-filters input,.run-filters select{display:block;-webkit-appearance:none;appearance:none;height:44px;line-height:normal;padding:0 12px;font-size:16px;text-align:left;border-radius:10px}
+.run-filters select{background-image:linear-gradient(45deg,transparent 50%,#888 50%),linear-gradient(135deg,#888 50%,transparent 50%);background-position:calc(100% - 17px) 19px,calc(100% - 12px) 19px;background-size:5px 5px;background-repeat:no-repeat;padding-right:30px}
+.run-filters input::-webkit-date-and-time-value{text-align:left;margin:0}
+.run-filters .secondary-button{min-height:44px;font-size:15px}
+.personal-week{grid-template-columns:72px minmax(30px,1fr) 56px 54px}
+.personal-week>em{text-align:right}
+.personal-week-pre>em{white-space:normal;line-height:1.2}
+.topbar-right .name-pill{max-width:150px}.role-suffix{display:none}
+}
