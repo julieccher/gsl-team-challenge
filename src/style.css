@@ -138,3 +138,5 @@ body{overflow-x:hidden;-webkit-text-size-adjust:100%}
 #root,.app-shell,.main,.content{min-width:0;max-width:100%;box-sizing:border-box}
 @media(max-width:650px){.login-page{padding:16px 14px calc(16px + env(safe-area-inset-bottom))}.login-card{width:100%;padding:24px 20px;border-radius:20px;gap:13px}.login-card .brand{padding-bottom:8px}.login-card h1{font-size:clamp(30px,8vw,38px)}.login-card p{font-size:14px}.content,.main{overflow-x:hidden}.table-card,.bars-card,.run-list,.personal-weeks,.development-card{max-width:100%}.development-card{padding:14px 12px 11px}.development-bars{height:155px;gap:7px}.development-track{height:105px;width:min(100%,28px)}.development-column>b{font-size:9px}}
 @media(max-width:360px){.login-card{padding:20px 16px}.login-card h1{font-size:29px}.content{padding-left:12px;padding-right:12px}}
+/* Teamrangliste: 11-Spalten-Raster gegen die allgemeine mobile .table-row-Regel absichern (horizontal scrollbar statt umbrechend) */
+.table-row.coach-head,.table-row.coach-row{min-width:990px;grid-template-columns:1.7fr 1fr repeat(6,.65fr) .8fr .8fr 65px}
