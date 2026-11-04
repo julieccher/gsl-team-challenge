@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity, Award, CalendarDays, Camera, Check, ChevronDown, ChevronRight,
   CircleUserRound, ClipboardList, Crown, Dumbbell, FileDown, Flag, Footprints, Home,
-  LockKeyhole, LogOut, Medal, Pencil, Plus, Settings, ShieldCheck, Trash2,
+  LayoutGrid, LockKeyhole, LogOut, Medal, Pencil, Plus, Settings, ShieldCheck, Trash2,
   Trophy, Upload, Users, Wallet, X
 } from "lucide-react";
 import { readRunScreenshot, type KmCheck } from "./lib/ocr";
@@ -135,6 +135,7 @@ function ChallengeApp({ user, profile, onSignOut }: { user: User; profile: any; 
   const [selectedId,setSelectedId]=useState(()=>readStore("lc26_selected",initialPlayers[0]?.id ?? ""));
   const [role,setRole]=useState<Role>(isTrainerRole(profile.role) ? "coach" : "player");
   const [tab,setTab]=useState<Tab>("dashboard");
+  const [moreOpen,setMoreOpen]=useState(false);
   const [goal,setGoal]=useState(()=>readStore("lc26_goal",3300));
   const [modal,setModal]=useState<"run"|"player"|"editRun"|null>(null);
   const [editRun,setEditRun]=useState<Run|null>(null);
@@ -357,6 +358,12 @@ function ChallengeApp({ user, profile, onSignOut }: { user: User; profile: any; 
   // Verwaltungsbereich ausschließlich für Trainer anzeigen und zugänglich machen.
   const visibleNavItems = role === "coach" ? navItems : navItems.filter(([key]) => key !== "settings");
 
+  // Handy-Leiste: vier Hauptpunkte, der Rest liegt hinter „Mehr“.
+  const mobileMainKeys:Tab[]=role==="coach"?["dashboard","week","runs","team"]:["dashboard","week","runs","private"];
+  const mobileMain=mobileMainKeys.map(k=>visibleNavItems.find(([key])=>key===k)).filter(Boolean) as typeof visibleNavItems;
+  const mobileMore=visibleNavItems.filter(([key])=>!mobileMainKeys.includes(key));
+  const shortLabel=(label:string)=>({Dashboard:"Start",Wochenübersicht:"Woche","Meine Übersicht":"Ich",Teamrangliste:"Rangliste"} as Record<string,string>)[label]??label;
+
   return <div className="app-shell">
     <aside className="sidebar">
       <div className="brand"><div className="brand-logo"><Footprints size={23}/></div><div><b>ATUSRUN</b><small>GSL TEAM CHALLENGE</small></div></div>
@@ -366,7 +373,7 @@ function ChallengeApp({ user, profile, onSignOut }: { user: User; profile: any; 
     </aside>
 
     <main className="main">
-      <header className="topbar"><div className="mobile-brand"><Footprints size={20}/> ATUSRUN</div><div className="topbar-right"><span className="status-dot"/> Challenge: 30.11.2026 – 10.01.2027 <span className="role-pill">{profile.name} · {role==="coach"?"Trainer":"Spieler"}</span><button className="role-pill" onClick={onSignOut}>Abmelden <LogOut size={13}/></button></div></header>
+      <header className="topbar"><div className="mobile-brand"><Footprints size={20}/> ATUSRUN</div><div className="topbar-right"><span className="status-dot"/> Challenge: 30.11.2026 – 10.01.2027 <span className="role-pill">{profile.name} · {role==="coach"?"Trainer":"Spieler"}</span><button className="role-pill logout-button" onClick={onSignOut} aria-label="Abmelden" title="Abmelden"><LogOut size={18}/></button></div></header>
       <div className="content">
         {tab==="dashboard"&&<Dashboard allKm={allKm} rewardKm={rewardKm} allTimeKm={allTimeKm} preKm={preKm} reward={teamReward} rewardProgress={rewardProgress} goal={goal} setGoal={setGoal} players={activePlayers.length} challengeRuns={challengeRuns.length} stats={sortedStats} totalPoints={totalPoints} onRuns={()=>setTab("runs")} onTeam={()=>{setRole("coach");setTab("team");}}/>}
 
@@ -410,10 +417,19 @@ function ChallengeApp({ user, profile, onSignOut }: { user: User; profile: any; 
 
         {tab==="settings"&&role==="coach"&&<SettingsView players={players} setPlayers={setPlayers} goal={goal} setGoal={setGoal} runs={runs} setRuns={setRuns} onExport={()=>exportBackup(players,runs,goal)} onImport={d=>{setPlayers(d.players);setRuns(d.runs);setGoal(d.goal);flash("Backup importiert");}}/>}
       </div>
-      <footer className="footer"><span>ATUSRUN · GSL</span><span>Jeder Kilometer zählt.</span></footer>
+      <footer className="footer"><span>ATUSRUN · GSL</span><span className="copyright">© 2026 Julian Eccher</span><span>Jeder Kilometer zählt.</span></footer>
     </main>
 
-    <div className="mobile-nav">{visibleNavItems.map(([k,label,icon])=><button key={k} className={tab===k?"active":""} onClick={()=>setTab(k)}>{icon}<small>{label==="Wochenübersicht"?"Woche":label==="Wochenplan"?"Plan":label==="Läufe"?"Läufe":label==="Meine Übersicht"?"Ich":label==="Trainerübersicht"?"Team":label==="Dashboard"?"Start":label}</small></button>)}</div>
+    <div className="mobile-nav">
+      {mobileMain.map(([k,label,icon])=><button key={k} className={tab===k&&!moreOpen?"active":""} onClick={()=>{setTab(k);setMoreOpen(false);}}>{icon}<small>{shortLabel(label)}</small></button>)}
+      <button className={moreOpen||mobileMore.some(([k])=>k===tab)?"active":""} onClick={()=>setMoreOpen(o=>!o)} aria-expanded={moreOpen}><LayoutGrid/><small>Mehr</small></button>
+    </div>
+    {moreOpen&&<div className="more-backdrop" onClick={()=>setMoreOpen(false)}>
+      <div className="more-sheet" role="dialog" aria-label="Weitere Bereiche" onClick={e=>e.stopPropagation()}>
+        <div className="more-head"><b>Weitere Bereiche</b><button className="icon-button" onClick={()=>setMoreOpen(false)} aria-label="Schließen"><X size={16}/></button></div>
+        <div className="more-grid">{mobileMore.map(([k,label,icon])=><button key={k} className={tab===k?"active":""} onClick={()=>{setTab(k);setMoreOpen(false);}}>{icon}<span>{label}</span></button>)}</div>
+      </div>
+    </div>}
 
     {modal&&<Modal mode={modal} run={editRun} player={editPlayer} players={players.filter(p=>p.active)} selectedId={selectedId} onClose={()=>{setModal(null);setEditRun(null);setEditPlayer(null);}} onSaveRun={saveRun} isCoach={role === "coach"} onSavePlayer={savePlayer}/>}
 
@@ -658,6 +674,7 @@ function LoginScreen() {
       <button className="red-button" type="submit" disabled={busy}>{busy?"Anmeldung läuft …":"Anmelden"}</button>
       <small>Zugänge werden vom Trainer eingerichtet.</small>
     </form>
+    <small className="login-copyright">© 2026 Julian Eccher</small>
   </main>;
 }
 
